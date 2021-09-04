@@ -15,6 +15,10 @@ const databaseConfig: DatabaseConfig = {
       },
       migrations: {
         naturalSort: true,
+        disableTransactions: false,
+        paths: ['./database/migrations'],
+        tableName: 'adonis_schema',
+        disableRollbacksInProduction: true,
       },
       healthCheck: false,
       debug: false,
