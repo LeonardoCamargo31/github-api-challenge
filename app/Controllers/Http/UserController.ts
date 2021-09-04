@@ -1,10 +1,11 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
+import UserSchema from '../../Validation/UserSchema'
 
 export default class UserController {
   public async findAll(ctx: HttpContextContract) {
     const allUsers = await User.all()
-    return ctx.response.status(200).send({
+    return ctx.response.ok({
       data: allUsers,
       count: allUsers.length,
       success: true,
@@ -14,59 +15,59 @@ export default class UserController {
   public async findById(ctx: HttpContextContract) {
     const idUser = ctx.params.id
     const user = await User.findBy('id', idUser)
-    return ctx.response
-      .status(200)
-      .send({ data: user, success: true, message: 'user found successfully' })
+    return ctx.response.ok({ data: user, success: true, message: 'user found successfully' })
   }
 
   public async create(ctx: HttpContextContract) {
-    const data = ctx.request.body()
-    // validate
+    try {
+      const payload = await ctx.request.validate(UserSchema)
+      const user = await User.create({
+        name: payload.name,
+        email: payload.email,
+        location: payload.location,
+        avatar: payload.avatar,
+        username: payload.username,
+        bio: payload.bio,
+      })
 
-    const user = await User.create({
-      name: data.name,
-      email: data.email,
-      location: data.location,
-      avatar: data.avatar,
-      username: data.username,
-      bio: data.bio,
-    })
-
-    return ctx.response
-      .status(201)
-      .send({ data: user, success: true, message: 'user created successfully' })
+      return ctx.response.created({
+        data: user,
+        success: true,
+        message: 'user created successfully',
+      })
+    } catch (error) {
+      return ctx.response.badRequest({ success: false, message: error.messages })
+    }
   }
 
   public async update(ctx: HttpContextContract) {
     const idUser = ctx.params.id
-    const data = ctx.request.body()
-    // validate
-
     let user = await User.findBy('id', idUser)
     if (user) {
-      user.name = data.name
-      user.email = data.email
-      user.location = data.location
-      user.avatar = data.avatar
-      user.username = data.username
-      user.bio = data.bio
-      user = await user.save()
-      return ctx.response
-        .status(200)
-        .send({ data: user, success: true, message: 'user updated successfully' })
+      try {
+        const payload = await ctx.request.validate(UserSchema)
+        user.name = payload.name
+        user.email = payload.email
+        user.location = payload.location
+        user.avatar = payload.avatar
+        user.username = payload.username
+        user.bio = payload.bio
+        user = await user.save()
+        return ctx.response.ok({ data: user, success: true, message: 'user updated successfully' })
+      } catch (error) {
+        return ctx.response.badRequest({ success: false, message: error.messages })
+      }
     }
-    return ctx.response.status(404).send({ success: false, message: 'user not found' })
+    return ctx.response.notFound({ success: false, message: 'user not found' })
   }
 
   public async delete(ctx: HttpContextContract) {
     const idUser = ctx.params.id
-    // validate
-
     let user = await User.findBy('id', idUser)
     if (user) {
       await user.delete()
-      return ctx.response.status(200).send({ success: true, message: 'user deleted successfully' })
+      return ctx.response.ok({ success: true, message: 'user deleted successfully' })
     }
-    return ctx.response.status(404).send({ success: false, message: 'user not found' })
+    return ctx.response.notFound({ success: false, message: 'user not found' })
   }
 }
