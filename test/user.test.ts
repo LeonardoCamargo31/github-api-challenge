@@ -60,7 +60,7 @@ test.group('user controller - findById', (group) => {
     await User.query().delete()
   })
 
-  test('should create a new user', async (assert) => {
+  test('should find user by id', async (assert) => {
     const { status, body } = await supertest(BASE_URL).get(`/user/${user.id}`)
 
     assert.equal(status, 200)

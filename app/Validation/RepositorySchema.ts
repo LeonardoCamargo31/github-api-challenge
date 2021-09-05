@@ -7,6 +7,6 @@ export default {
     public: schema.boolean(),
   }),
   messages: {
-    required: 'The {{ field }} is required to create a new repository',
+    required: 'the {{ field }} is required to create a new repository',
   },
 }

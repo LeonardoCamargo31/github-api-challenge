@@ -12,42 +12,47 @@ export default class RepositoryController {
     }
 
     const repositories = await user.related('repositories').query().withCount('stars')
-    if (repositories) {
-      const response = repositories.map((item) => {
-        return {
-          ...item.$attributes,
-          countStars: item.$extras.stars_count,
-        }
-      })
+    const response = repositories.map((item) => {
+      return {
+        ...item.$attributes,
+        countStars: item.$extras.stars_count,
+      }
+    })
 
-      return ctx.response.ok({
-        data: response,
-        count: repositories.length,
-        success: true,
-      })
-    }
+    return ctx.response.ok({
+      data: response,
+      count: repositories.length,
+      success: true,
+    })
   }
 
   public async findBySlug(ctx: HttpContextContract) {
     const slug = ctx.params.slug
-    let repository = await Repository.query().where('slug', slug).withCount('stars')
+    let repository = await Repository.query().where('slug', slug).withCount('stars').first()
 
-    if (repository) {
-      const response = repository.map((item) => {
-        return {
-          ...item.$attributes,
-          countStars: item.$extras.stars_count,
-        }
-      })
-
-      return ctx.response.ok({ success: true, data: response })
+    if (!repository) {
+      return ctx.response.notFound({ success: false, message: 'repository not found' })
     }
+
+    const response = {
+      ...repository.$attributes,
+      countStars: repository.$extras.stars_count,
+    }
+
+    return ctx.response.ok({
+      success: true,
+      message: 'repository found successfully',
+      data: response,
+    })
   }
 
   public async create(ctx: HttpContextContract) {
     const username = ctx.request.body().username
     if (!username) {
-      return ctx.response.badRequest({ success: false, message: 'username is required' })
+      return ctx.response.badRequest({
+        success: false,
+        message: 'the username is required to create a new repository',
+      })
     }
 
     let user = await User.findBy('username', username)
@@ -70,7 +75,11 @@ export default class RepositoryController {
         message: 'repository created successfully',
       })
     } catch (error) {
-      return ctx.response.badRequest({ success: false, message: error.messages })
+      return ctx.response.badRequest({
+        success: false,
+        message: 'invalid data',
+        errors: error.messages,
+      })
     }
   }
 
@@ -78,7 +87,10 @@ export default class RepositoryController {
     const slug = ctx.params.slug
     const username = ctx.request.body().username
     if (!username) {
-      return ctx.response.badRequest({ success: false, message: 'username is required' })
+      return ctx.response.badRequest({
+        success: false,
+        message: 'the username is required to update repository',
+      })
     }
 
     let user = await User.findBy('username', username)
@@ -87,22 +99,29 @@ export default class RepositoryController {
     }
 
     let repository = await Repository.findBy('slug', slug)
-    if (repository) {
-      try {
-        const payload = await ctx.request.validate(RepositorySchema)
-        repository.name = payload.name
-        repository.description = payload.description
-        repository.public = payload.public
-        repository.slug = `${user.username}-${payload.name}`
-        repository = await repository.save()
-        return ctx.response.ok({
-          data: repository,
-          success: true,
-          message: 'repository updated successfully',
-        })
-      } catch (error) {
-        return ctx.response.badRequest({ success: false, message: error.messages })
-      }
+    if (!repository) {
+      return ctx.response.notFound({ success: false, message: 'repository not found' })
+    }
+
+    try {
+      const payload = await ctx.request.validate(RepositorySchema)
+      repository.name = payload.name
+      repository.description = payload.description
+      repository.public = payload.public
+      repository.userId = user.id
+      repository = await repository.save()
+
+      return ctx.response.ok({
+        data: repository,
+        success: true,
+        message: 'repository updated successfully',
+      })
+    } catch (error) {
+      return ctx.response.badRequest({
+        success: false,
+        message: 'invalid data',
+        errors: error.messages,
+      })
     }
   }
 
