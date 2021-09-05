@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, HasMany } from '@ioc:Adonis/Lucid/Orm'
 import Repository from 'App/Models/Repository'
+import Star from 'App/Models/Star'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -31,5 +32,8 @@ export default class User extends BaseModel {
   public updatedAt: DateTime
 
   @hasMany(() => Repository)
-  public Repositories: HasMany<typeof Repository>
+  public repositories: HasMany<typeof Repository>
+
+  @hasMany(() => Star)
+  public stars: HasMany<typeof Star>
 }

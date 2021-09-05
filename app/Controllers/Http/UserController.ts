@@ -4,9 +4,17 @@ import UserSchema from '../../Validation/UserSchema'
 
 export default class UserController {
   public async findAll(ctx: HttpContextContract) {
-    const allUsers = await User.all()
+    const allUsers = await User.query().withCount('repositories')
+
+    const response = allUsers.map((item) => {
+      return {
+        ...item.$attributes,
+        countRepositories: item.$extras.repositories_count,
+      }
+    })
+
     return ctx.response.ok({
-      data: allUsers,
+      data: response,
       count: allUsers.length,
       success: true,
     })
@@ -14,8 +22,16 @@ export default class UserController {
 
   public async findById(ctx: HttpContextContract) {
     const idUser = ctx.params.id
-    const user = await User.findBy('id', idUser)
-    return ctx.response.ok({ data: user, success: true, message: 'user found successfully' })
+    const user = await User.query().where('id', idUser).withCount('repositories')
+
+    const response = user.map((item) => {
+      return {
+        ...item.$attributes,
+        countRepositories: item.$extras.repositories_count,
+      }
+    })
+
+    return ctx.response.ok({ data: response, success: true, message: 'user found successfully' })
   }
 
   public async create(ctx: HttpContextContract) {

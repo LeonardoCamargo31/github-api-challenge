@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, column, belongsTo, BelongsTo, hasMany, HasMany } from '@ioc:Adonis/Lucid/Orm'
 import { slugify } from '@ioc:Adonis/Addons/LucidSlugify'
 import User from 'App/Models/User'
+import Star from 'App/Models/Star'
 
 export default class Repository extends BaseModel {
   @column({ isPrimary: true })
@@ -35,4 +36,7 @@ export default class Repository extends BaseModel {
 
   @belongsTo(() => User)
   public user: BelongsTo<typeof User>
+
+  @hasMany(() => Star)
+  public stars: HasMany<typeof Star>
 }

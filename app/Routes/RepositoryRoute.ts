@@ -1,7 +1,7 @@
 import Route from '@ioc:Adonis/Core/Route'
 
-Route.get('/:username/repository', 'RepositoryController.findAllByUsername')
-Route.get('/:username/:slug', 'RepositoryController.findBySlug')
-Route.post('/:username/repository', 'RepositoryController.create')
-Route.put('/:username/:slug', 'RepositoryController.update')
-Route.delete('/:username/:slug', 'RepositoryController.delete')
+Route.get('/repository/:username', 'RepositoryController.findAllByUsername')
+Route.get('/repository/:username/:slug', 'RepositoryController.findBySlug')
+Route.post('/repository', 'RepositoryController.create')
+Route.put('/repository/:slug', 'RepositoryController.update')
+Route.delete('/repository/:slug', 'RepositoryController.delete')
