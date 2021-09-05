@@ -22,21 +22,22 @@ export default class UserController {
 
   public async findById(ctx: HttpContextContract) {
     const idUser = ctx.params.id
-    const user = await User.query().where('id', idUser).withCount('repositories')
+    const user = await User.query().where('id', idUser).withCount('repositories').first()
+    if (!user) {
+      return ctx.response.notFound({ success: false, message: 'user not found' })
+    }
 
-    const response = user.map((item) => {
-      return {
-        ...item.$attributes,
-        countRepositories: item.$extras.repositories_count,
-      }
-    })
+    const response = {
+      ...user.$attributes,
+      countRepositories: user.$extras.repositories_count,
+    }
 
     return ctx.response.ok({ data: response, success: true, message: 'user found successfully' })
   }
 
   public async create(ctx: HttpContextContract) {
     try {
-      const payload = await ctx.request.validate(UserSchema)
+      const payload = await ctx.request.validate(UserSchema())
       const user = await User.create({
         name: payload.name,
         email: payload.email,
@@ -52,29 +53,37 @@ export default class UserController {
         message: 'user created successfully',
       })
     } catch (error) {
-      return ctx.response.badRequest({ success: false, message: error.messages })
+      return ctx.response.badRequest({
+        success: false,
+        message: 'invalid data',
+        errors: error.messages,
+      })
     }
   }
 
   public async update(ctx: HttpContextContract) {
     const idUser = ctx.params.id
     let user = await User.findBy('id', idUser)
-    if (user) {
-      try {
-        const payload = await ctx.request.validate(UserSchema)
-        user.name = payload.name
-        user.email = payload.email
-        user.location = payload.location
-        user.avatar = payload.avatar
-        user.username = payload.username
-        user.bio = payload.bio
-        user = await user.save()
-        return ctx.response.ok({ data: user, success: true, message: 'user updated successfully' })
-      } catch (error) {
-        return ctx.response.badRequest({ success: false, message: error.messages })
-      }
+    if (!user) {
+      return ctx.response.notFound({ success: false, message: 'user not found' })
     }
-    return ctx.response.notFound({ success: false, message: 'user not found' })
+    try {
+      const payload = await ctx.request.validate(UserSchema(idUser))
+      user.name = payload.name
+      user.email = payload.email
+      user.location = payload.location
+      user.avatar = payload.avatar
+      user.username = payload.username
+      user.bio = payload.bio
+      user = await user.save()
+      return ctx.response.ok({ data: user, success: true, message: 'user updated successfully' })
+    } catch (error) {
+      return ctx.response.badRequest({
+        success: false,
+        message: 'invalid data',
+        errors: error.messages,
+      })
+    }
   }
 
   public async delete(ctx: HttpContextContract) {

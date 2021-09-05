@@ -1,6 +1,4 @@
 {
   "check-coverage": true,
-  "sourceMap": true,
-  "all": true,
-  "instrument": true
+  "sourceMap": true
 }
